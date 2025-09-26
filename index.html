@@ -56,6 +56,9 @@
     <label for="cost">Total Treatment Cost ($)</label>
     <input type="number" id="cost" placeholder="e.g. 5800">
 
+    <label for="cap">Insurance Cap ($)</label>
+    <input type="number" id="cap" placeholder="e.g. 5000">
+
     <label for="insurance">Insurance Benefit ($)</label>
     <input type="number" id="insurance" placeholder="e.g. 2000">
 
@@ -84,6 +87,7 @@
 
   <script>
     const costInput = document.getElementById('cost');
+    const capInput = document.getElementById('cap');
     const insuranceInput = document.getElementById('insurance');
     const discountInput = document.getElementById('discount');
     const downPaymentInput = document.getElementById('downPayment');
@@ -93,22 +97,28 @@
     const upfrontOutput = document.getElementById('upfront');
     const financedOutput = document.getElementById('financed');
 
-    function parseDiscount(discountValue, totalCost) {
+    function parseDiscount(discountValue, baseCost) {
       discountValue = discountValue.trim();
       if (discountValue.endsWith('%')) {
         const percent = parseFloat(discountValue.slice(0, -1));
-        return isNaN(percent) ? 0 : (totalCost * percent / 100);
+        return isNaN(percent) ? 0 : (baseCost * percent / 100);
       }
       const flat = parseFloat(discountValue);
       return isNaN(flat) ? 0 : flat;
     }
 
     function calculate() {
-      const cost = parseFloat(costInput.value) || 0;
+      let cost = parseFloat(costInput.value) || 0;
+      const cap = parseFloat(capInput.value) || null;
       const insurance = parseFloat(insuranceInput.value) || 0;
       const discountRaw = discountInput.value || "0";
       const downPayment = parseFloat(downPaymentInput.value) || 0;
       const term = parseInt(termInput.value) || 24;
+
+      // Apply insurance cap if entered
+      if (cap && cap > 0 && cap < cost) {
+        cost = cap;
+      }
 
       const discount = parseDiscount(discountRaw, cost);
       const adjustedCost = Math.max(cost - insurance - discount, 0);
@@ -120,7 +130,7 @@
       financedOutput.textContent = amountFinanced.toFixed(2);
     }
 
-    [costInput, insuranceInput, discountInput, downPaymentInput, termInput].forEach(input => {
+    [costInput, capInput, insuranceInput, discountInput, downPaymentInput, termInput].forEach(input => {
       input.addEventListener('input', calculate);
     });
   </script>
