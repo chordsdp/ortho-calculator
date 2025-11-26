@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orthodontic Payment Calculator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f7f7f7;
+      margin: 0;
+      padding: 2rem;
+      color: #333;
+    }
+    .calculator {
+      background: white;
+      max-width: 600px;
+      margin: auto;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .calculator h2 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: bold;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 1rem;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    .result {
+      background: #eef6ff;
+      padding: 1rem;
+      border-radius: 5px;
+      font-size: 1.2rem;
+    }
+    .warning {
+      color: #d9534f;
+      font-size: 0.95rem;
+      margin-bottom: 1rem;
+      display: none;
+    }
+    @media print {
+      button#printButton {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="calculator">
+    <h2>Orthodontic Payment Calculator</h2>
+
+    <label for="cost">Total Treatment Cost ($)</label>
+    <input type="number" id="cost" placeholder="e.g. 5800">
+
+    <label for="cap">Insurance Cap ($)</label>
+    <input type="number" id="cap" placeholder="e.g. 5000">
+
+    <label for="insurance">Insurance Benefit ($)</label>
+    <input type="number" id="insurance" placeholder="e.g. 2000">
+
+    <label for="discount">Discount</label>
+    <input type="text" id="discount" placeholder="e.g. 500 or 10%">
+
+    <label for="downPayment">Down Payment ($)</label>
+    <input type="number" id="downPayment" placeholder="e.g. 580">
+
+    <label for="term">Payment Plan Length (months)</label>
+    <input type="number" id="term" placeholder="e.g. 24" min="1" max="40">
+    <div id="term-warning" class="warning">Payment plan length cannot exceed 40 months.</div>
+
+    <div class="result">
+      <p><strong>Monthly Payment:</strong> $<span id="monthly">0.00</span></p>
+      <p><strong>Upfront Payment:</strong> $<span id="upfront">0.00</span></p>
+      <p><strong>Total Amount Financed:</strong> $<span id="financed">0.00</span></p>
+    </div>
+
+    <button id="printButton" onclick="window.print()">Print Summary</button>
+  </div>
+
+  <script>
+    const costInput = document.getElementById('cost');
+    const capInput = document.getElementById('cap');
+    const insuranceInput = document.getElementById('insurance');
+    const discountInput = document.getElementById('discount');
+    const downPaymentInput = document.getElementById('downPayment');
+    const termInput = document.getElementById('term');
+    const termWarning = document.getElementById('term-warning');
+
+    const monthlyOutput = document.getElementById('monthly');
+    const upfrontOutput = document.getElementById('upfront');
+    const financedOutput = document.getElementById('financed');
+
+    function parseDiscount(discountValue, baseCost) {
+      discountValue = discountValue.trim();
+      if (discountValue.endsWith('%')) {
+        const percent = parseFloat(discountValue.slice(0, -1));
+        return isNaN(percent) ? 0 : (baseCost * percent / 100);
+      }
+      const flat = parseFloat(discountValue);
+      return isNaN(flat) ? 0 : flat;
+    }
+
+    function calculate() {
+      let cost = parseFloat(costInput.value) || 0;
+      const cap = parseFloat(capInput.value) || null;
+      const insurance = parseFloat(insuranceInput.value) || 0;
+      const discountRaw = discountInput.value || "0";
+      const downPayment = parseFloat(downPaymentInput.value) || 0;
+      let term = parseInt(termInput.value) || 0;
+
+      if (term > 40) {
+        termWarning.style.display = 'block';
+        term = 40;
+        termInput.value = 40;
+      } else {
+        termWarning.style.display = 'none';
+      }
+
+      if (cap && cap > 0 && cap < cost) {
+        cost = cap;
+      }
+
+      const discount = parseDiscount(discountRaw, cost);
+      const adjustedCost = Math.max(cost - insurance - discount, 0);
+      const amountFinanced = Math.max(adjustedCost - downPayment, 0);
+      const monthlyPayment = term > 0 ? (amountFinanced / term) : 0;
+
+      monthlyOutput.textContent = monthlyPayment.toFixed(2);
+      upfrontOutput.textContent = downPayment.toFixed(2);
+      financedOutput.textContent = amountFinanced.toFixed(2);
+    }
+
+    [costInput, capInput, insuranceInput, discountInput, downPaymentInput, termInput].forEach(input => {
+      input.addEventListener('input', calculate);
+    });
+
+    calculate();
+  </script>
+</body>
+</html>
